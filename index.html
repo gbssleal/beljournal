@@ -619,7 +619,7 @@ tr:last-child td{border-bottom:none;}
           <div class="field"><label>Subassunto</label><select id="reg-subassunto" onchange="updateRegResumo()"></select></div>
         </div>
         <div class="frow">
-          <div class="field"><label>Meta de tempo (opcional, minutos)</label><input type="number" id="reg-tempo-min" min="0" placeholder="Ex: 60" oninput="updateRegResumo()"></div>
+          <div class="field"><label>Tempo estudado</label><div style="display:flex;gap:8px;align-items:center;"><input type="number" id="reg-horas" min="0" value="0" style="width:80px;" placeholder="h" oninput="updateRegResumo()"><input type="number" id="reg-minutos" min="0" max="59" value="0" style="width:80px;" placeholder="min" oninput="updateRegResumo()"></div></div>
           <div class="field"><label>Categoria</label>
             <select id="reg-tipo" onchange="updateRegResumo()">
               <option value="teoria">Teoria</option>
@@ -1813,7 +1813,10 @@ function finishRegistro(){
   const subassuntoId = document.getElementById('reg-subassunto').value || null;
   const tipo = document.getElementById('reg-tipo').value;
   const foco = document.getElementById('reg-foco').value;
-  const tempoMin = parseFloat(document.getElementById('reg-tempo-min').value)||0;
+  const horas = parseFloat(document.getElementById('reg-horas').value)||0;
+  const minutos = parseFloat(document.getElementById('reg-minutos').value)||0;
+  const tempoMin = horas*60 + minutos;
+  if(tempoMin <= 0){ alert('Informe o tempo estudado.'); return; }
   const segundos = Math.round(tempoMin*60);
   const data = document.getElementById('reg-data').value || todayISO();
   const observacoes = document.getElementById('reg-observacoes').value.trim();
@@ -1831,7 +1834,7 @@ function finishRegistro(){
     document.getElementById('reg-materia').value = '';
     fillAssuntos('reg');
   }
-  document.getElementById('reg-tempo-min').value='';
+  document.getElementById('reg-horas').value='0'; document.getElementById('reg-minutos').value='0';
   document.getElementById('reg-quest-total').value=''; document.getElementById('reg-quest-acertos').value=''; document.getElementById('reg-observacoes').value='';
   renderAll();
   updateRegResumo();
@@ -1862,7 +1865,9 @@ function updateRegResumo(){
   const assuntoId = document.getElementById('reg-assunto').value;
   const a = assuntoId ? getAssunto(materiaId, assuntoId) : null;
   const tipo = document.getElementById('reg-tipo').value;
-  const totalMin = Math.round(parseFloat(document.getElementById('reg-tempo-min').value)||0);
+  const horasR = parseFloat(document.getElementById('reg-horas').value)||0;
+  const minutosR = parseFloat(document.getElementById('reg-minutos').value)||0;
+  const totalMin = Math.round(horasR*60 + minutosR);
   const data = document.getElementById('reg-data').value || todayISO();
   el.className = 'reg-resumo';
   el.innerHTML = `📚 Você vai registrar <b>${escapeHtml(m?m.nome:'')}</b>${a?' · '+escapeHtml(a.nome):''} · ${tipoLabel(tipo)} · <b>${totalMin}min</b> · ${fmtData(data)}`;
