@@ -1435,7 +1435,7 @@ function fillFiltroAssunto(){
 }
 
 /* ===================== TIMER ===================== */
-let timerSeconds = 0, timerRunning = false, timerIntervalId = null, timerPauseCount = 0, timerEverStarted = false, timerPausedSeconds = 0, timerPauseStartedAt = null;
+let timerSeconds = 0, timerRunning = false, timerIntervalId = null, timerPauseCount = 0, timerEverStarted = false, timerPausedSeconds = 0, timerPauseStartedAt = null, timerStartedAt = null, timerBaseSeconds = 0;
 function updateTimerDisplay(){
   const h = Math.floor(timerSeconds/3600), m = Math.floor((timerSeconds%3600)/60), s = timerSeconds%60;
   const dispEl = document.getElementById('crono-display');
@@ -1483,21 +1483,33 @@ function updateTimerDisplay(){
     }
   }
 }
+function timerTick(){
+  if(!timerRunning || timerStartedAt==null) return;
+  timerSeconds = timerBaseSeconds + Math.floor((Date.now()-timerStartedAt)/1000);
+  updateTimerDisplay();
+}
 function timerStart(){
   if(timerRunning) return;
   if(timerPauseStartedAt){ timerPausedSeconds += Math.round((Date.now()-timerPauseStartedAt)/1000); timerPauseStartedAt = null; }
   timerRunning = true;
   timerEverStarted = true;
+  timerBaseSeconds = timerSeconds;
+  timerStartedAt = Date.now();
   document.getElementById('crono-start').disabled = true;
   document.getElementById('crono-pause').disabled = false;
   const saveBtn = document.getElementById('crono-save'); if(saveBtn) saveBtn.disabled = false;
   const cancelBtn = document.getElementById('crono-cancel'); if(cancelBtn) cancelBtn.disabled = false;
-  timerIntervalId = setInterval(()=>{ timerSeconds++; updateTimerDisplay(); }, 1000);
+  timerIntervalId = setInterval(timerTick, 1000);
   updateTimerDisplay();
 }
 function timerPause(){
-  if(timerRunning){ timerPauseCount++; timerPauseStartedAt = Date.now(); }
+  if(timerRunning){
+    timerSeconds = timerBaseSeconds + Math.floor((Date.now()-timerStartedAt)/1000);
+    timerPauseCount++;
+    timerPauseStartedAt = Date.now();
+  }
   timerRunning = false;
+  timerStartedAt = null;
   clearInterval(timerIntervalId);
   document.getElementById('crono-start').disabled = false;
   document.getElementById('crono-pause').disabled = true;
@@ -1506,6 +1518,7 @@ function timerPause(){
 function timerReset(){
   timerPause();
   timerSeconds = 0;
+  timerBaseSeconds = 0;
   timerPauseCount = 0;
   timerEverStarted = false;
   timerPausedSeconds = 0;
@@ -1514,6 +1527,9 @@ function timerReset(){
   const cancelBtn = document.getElementById('crono-cancel'); if(cancelBtn) cancelBtn.disabled = true;
   updateTimerDisplay();
 }
+document.addEventListener('visibilitychange', function(){
+  if(!document.hidden && timerRunning){ timerTick(); }
+});
 function cancelarCronometro(){
   if(!timerEverStarted && timerSeconds<=0){ return; }
   if(!confirm('Cancelar esta sessão de cronômetro? O tempo registrado será perdido.')) return;
